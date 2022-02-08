@@ -1,0 +1,178 @@
+%General Mission Analysis Tool(GMAT) Script
+%Created: 2019-07-28 12:23:36
+
+%----------------------------------------
+%---------- Spacecraft
+%----------------------------------------
+
+Create Spacecraft A16_PFS;  % Apollo 16 Subsatellite
+
+GMAT A16_PFS.DateFormat = UTCGregorian;
+
+GMAT A16_PFS.Epoch = '24 Apr 1972 21:56:09.000';              
+
+% Lat and Long are from Mission Report Table 3-III
+% ECC and INC are from a NASA web page
+% https://nssdc.gsfc.nasa.gov/nmc/spacecraft/displayTrajectory.action?id=1972-031D
+
+GMAT A16_PFS.CoordinateSystem = LunaFixed;
+GMAT A16_PFS.DisplayStateType = Keplerian;
+GMAT A16_PFS.SMA = 1858.94011912862;
+GMAT A16_PFS.ECC = 0.01079999999999634;
+GMAT A16_PFS.INC = 169.281;
+GMAT A16_PFS.RAAN = 243.5251363194632;
+GMAT A16_PFS.AOP = 55.06772389457998;
+GMAT A16_PFS.TA = 304.4440254634755;
+
+%  https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1972-031D
+GMAT A16_PFS.DryMass = 36.3;
+GMAT A16_PFS.Cd = 2.2;
+GMAT A16_PFS.Cr = 1.8;
+GMAT A16_PFS.DragArea = 0.3;
+GMAT A16_PFS.SRPArea = 0.3;
+GMAT A16_PFS.NAIFId = -10001001;
+GMAT A16_PFS.NAIFIdReferenceFrame = -9001001;
+GMAT A16_PFS.OrbitColor = Red;
+GMAT A16_PFS.TargetColor = Teal;
+GMAT A16_PFS.OrbitErrorCovariance = [ 1e+070 0 0 0 0 0 ; 0 1e+070 0 0 0 0 ; 0 0 1e+070 0 0 0 ; 0 0 0 1e+070 0 0 ; 0 0 0 0 1e+070 0 ; 0 0 0 0 0 1e+070 ];
+GMAT A16_PFS.CdSigma = 1e+070;
+GMAT A16_PFS.CrSigma = 1e+070;
+GMAT A16_PFS.Id = 'PFS';
+GMAT A16_PFS.Attitude = CoordinateSystemFixed;
+%GMAT A16_PFS.SPADDragScaleFactor = 1;
+GMAT A16_PFS.SPADSRPScaleFactor = 1;
+%GMAT A16_PFS.SPADSRPInterpolationMethod = Bilinear;
+%GMAT A16_PFS.SPADSRPScaleFactorSigma = 1e+70;
+%GMAT A16_PFS.SPADDragInterpolationMethod = Bilinear;
+%GMAT A16_PFS.SPADDragScaleFactorSigma = 1e+70;
+GMAT A16_PFS.ModelFile = 'aura.3ds';
+GMAT A16_PFS.ModelOffsetX = 0;
+GMAT A16_PFS.ModelOffsetY = 0;
+GMAT A16_PFS.ModelOffsetZ = 0;
+GMAT A16_PFS.ModelRotationX = 0;
+GMAT A16_PFS.ModelRotationY = 0;
+GMAT A16_PFS.ModelRotationZ = 0;
+GMAT A16_PFS.ModelScale = 1;
+GMAT A16_PFS.AttitudeDisplayStateType = 'Quaternion';
+GMAT A16_PFS.AttitudeRateDisplayStateType = 'AngularVelocity';
+GMAT A16_PFS.AttitudeCoordinateSystem = EarthMJ2000Eq;
+GMAT A16_PFS.EulerAngleSequence = '321';
+
+
+%----------------------------------------
+%---------- ForceModels
+%----------------------------------------
+
+Create ForceModel MoonProp_ForceModel;
+GMAT MoonProp_ForceModel.CentralBody = Luna;
+GMAT MoonProp_ForceModel.PrimaryBodies = {Luna};
+GMAT MoonProp_ForceModel.PointMasses = {Earth, Jupiter, Mars, Neptune, Saturn, Sun, Uranus, Venus};
+GMAT MoonProp_ForceModel.Drag = None;
+GMAT MoonProp_ForceModel.SRP = On;
+GMAT MoonProp_ForceModel.RelativisticCorrection = Off;
+GMAT MoonProp_ForceModel.ErrorControl = RSSState;
+GMAT MoonProp_ForceModel.GravityField.Luna.Degree = 200;
+GMAT MoonProp_ForceModel.GravityField.Luna.Order = 200;
+GMAT MoonProp_ForceModel.GravityField.Luna.StmLimit = 200;
+
+% you'll need to edit this path for your setup
+% the gravity model is available online at
+% https://pds-geosciences.wustl.edu/grail/grail-l-lgrs-5-rdr-v1/grail_1001/shadr/
+GMAT MoonProp_ForceModel.GravityField.Luna.PotentialFile = 'C:\Users\roger\AppData\Local\GMAT\R2018a\data\gravity\luna\gggrx_1200a_sha.tab';
+GMAT MoonProp_ForceModel.GravityField.Luna.TideModel = 'None';
+GMAT MoonProp_ForceModel.SRP.Flux = 1367;
+GMAT MoonProp_ForceModel.SRP.SRPModel = Spherical;
+GMAT MoonProp_ForceModel.SRP.Nominal_Sun = 149597870.691;
+
+%----------------------------------------
+%---------- Propagators
+%----------------------------------------
+
+Create Propagator MoonProp;
+GMAT MoonProp.FM = MoonProp_ForceModel;
+GMAT MoonProp.Type = PrinceDormand78;
+GMAT MoonProp.InitialStepSize = 0.01;
+GMAT MoonProp.Accuracy = 9.999999999999999e-012;
+GMAT MoonProp.MinStep = 0.001;
+GMAT MoonProp.MaxStep = 100;
+GMAT MoonProp.MaxStepAttempts = 50;
+GMAT MoonProp.StopIfAccuracyIsViolated = true;
+
+%----------------------------------------
+%---------- Coordinate Systems
+%----------------------------------------
+
+Create CoordinateSystem MoonInertial;
+GMAT MoonInertial.Origin = Luna;
+GMAT MoonInertial.Axes = BodyInertial;
+
+Create CoordinateSystem LunaFixed;
+GMAT LunaFixed.Origin = Luna;
+GMAT LunaFixed.Axes = BodyFixed;
+
+
+%----------------------------------------
+%---------- Subscribers
+%----------------------------------------
+
+
+Create ReportFile HighsAndLows;
+GMAT HighsAndLows.SolverIterations = Current;
+GMAT HighsAndLows.UpperLeft = [ 0 0 ];
+GMAT HighsAndLows.Size = [ 0 0 ];
+GMAT HighsAndLows.RelativeZOrder = 0;
+GMAT HighsAndLows.Maximized = false;
+GMAT HighsAndLows.Filename = 'perilune.csv';
+GMAT HighsAndLows.Precision = 16;
+GMAT HighsAndLows.Add = {A16_PFS.UTCModJulian, A16_PFS.UTCGregorian, A16_PFS.Luna.Longitude, A16_PFS.Luna.Latitude, A16_PFS.Luna.Altitude};
+GMAT HighsAndLows.WriteHeaders = true;
+GMAT HighsAndLows.LeftJustify = On;
+GMAT HighsAndLows.ZeroFill = Off;
+GMAT HighsAndLows.FixedWidth = false;
+GMAT HighsAndLows.Delimiter = ',';
+GMAT HighsAndLows.ColumnWidth = 23;
+GMAT HighsAndLows.WriteReport = false;
+
+Create ReportFile LatLongAlt;
+GMAT LatLongAlt.SolverIterations = Current;
+GMAT LatLongAlt.UpperLeft = [ 0 0 ];
+GMAT LatLongAlt.Size = [ 0.5984776403425309 0.7973856209150327 ];
+GMAT LatLongAlt.RelativeZOrder = 243;
+GMAT LatLongAlt.Maximized = false;
+GMAT LatLongAlt.Filename = 'FullGroundTrack.csv';
+GMAT LatLongAlt.Precision = 16;
+GMAT LatLongAlt.Add = {A16_PFS.UTCModJulian, A16_PFS.UTCGregorian, A16_PFS.Luna.Longitude, A16_PFS.Luna.Latitude, A16_PFS.Luna.Altitude, A16_PFS.LunaFixed.PlanetodeticHFPA, A16_PFS.LunaFixed.PlanetodeticAZI};
+GMAT LatLongAlt.WriteHeaders = true;
+GMAT LatLongAlt.LeftJustify = On;
+GMAT LatLongAlt.ZeroFill = Off;
+GMAT LatLongAlt.FixedWidth = false;
+GMAT LatLongAlt.Delimiter = ',';
+GMAT LatLongAlt.ColumnWidth = 23;
+GMAT LatLongAlt.WriteReport = true;
+
+%----------------------------------------
+%---------- Mission Sequence
+%----------------------------------------
+BeginMissionSequence;
+
+% From the SubSatellite Launch:
+% Run a few months until altitude is below terrain
+While A16_PFS.ElapsedDays < 60 & A16_PFS.Luna.Altitude > -3
+   Propagate 'Prop2Apo' MoonProp(A16_PFS) {A16_PFS.Luna.Apoapsis};
+   Propagate 'Prop2Peri' MoonProp(A16_PFS) {A16_PFS.Luna.Periapsis};
+   Report 'ReportPeri' HighsAndLows A16_PFS.A1ModJulian A16_PFS.UTCGregorian A16_PFS.Luna.Longitude A16_PFS.Luna.Latitude A16_PFS.Luna.Altitude;
+EndWhile;
+
+Stop;
+
+
+
+
+
+
+
+
+
+
+
+
